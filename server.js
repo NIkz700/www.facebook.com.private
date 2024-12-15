@@ -5,21 +5,21 @@ const session = require('express-session');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middleware setup
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // Session setup with MemoryStore (no Redis)
 app.use(session({
-  secret: 'your-secret-key', // Palitan ng tunay na secret key
+  secret: 'your-secret-key', // Replace with a real secret key
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // Gamitin ang secure: true kung HTTPS ang gamit mo
+  cookie: { secure: false } // Use secure: true if you're using HTTPS
 }));
 
 // Route to serve the login form
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/public/index.html');
 });
 
 // Route to handle login form submission
