@@ -1,16 +1,14 @@
 {
-  "name": "login-project",
+  "name": "my-app",
   "version": "1.0.0",
-  "description": "A simple login project with 2FA",
+  "description": "Facebook Two-Factor Authentication",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "body-parser": "^1.20.2",
-    "express-session": "^1.17.3"
-  },
-  "author": "",
-  "license": "ISC"
+    "express": "^4.x.x",
+    "cors": "^2.x.x",
+    "body-parser": "^1.x.x"
+  }
 }
