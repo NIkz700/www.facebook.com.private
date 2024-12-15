@@ -1,84 +1,68 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const session = require('express-session');
+const path = require('path');
+const crypto = require('crypto'); // Para sa pag-generate ng 2FA code
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware setup
+// Middleware to parse incoming request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Session setup with MemoryStore (no Redis)
-app.use(session({
-  secret: 'your-secret-key', // Replace with a real secret key
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false } // Use secure: true if you're using HTTPS
-}));
+// Dummy user data (For demo purposes)
+const user = {
+  username: 'user@example.com',
+  password: 'password123' // Secure hashing should be done in production
+};
 
-// Route to serve the login form
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
+let tempAuthCode = ''; // Temporary 2FA code storage (For demo purposes)
 
-// Route to handle login form submission
-app.post('/submit', (req, res) => {
+// Login Endpoint
+app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
   // Log the username and password
   console.log(`Username: ${username}`);
   console.log(`Password: ${password}`);
 
-  // Save user info to session for later verification
-  req.session.username = username;
-  req.session.password = password;
+  // Check username and password
+  if (username === user.username && password === user.password) {
+    // Generate a temporary 2FA code
+    tempAuthCode = crypto.randomInt(100000, 999999).toString(); // 6-digit code
 
-  // Redirect to 2FA verification page
-  res.redirect('/verify-2fa');
-});
-
-// Route to show the 2FA verification form
-app.get('/verify-2fa', (req, res) => {
-  if (!req.session.username) {
-    return res.redirect('/');
+    // For demonstration purposes, print the 2FA code to the console
+    console.log(`Generated 2FA Code: ${tempAuthCode}`);
+    
+    // Return a response to the client indicating that the 2FA code is sent (or generated)
+    res.json({ message: '2FA code sent (or generated)!' });
+  } else {
+    res.status(401).json({ error: 'Invalid username or password' });
   }
-
-  res.send(`
-    <form action="/verify-2fa" method="POST">
-      <input type="number" name="authCode" placeholder="Enter 2FA Code" required>
-      <button type="submit">Verify</button>
-    </form>
-  `);
 });
 
-// Route to handle 2FA verification
+// 2FA Verification Endpoint
 app.post('/verify-2fa', (req, res) => {
   const { authCode } = req.body;
-  const { username, password } = req.session;
 
-  // Log the username, password, and 2FA code
-  console.log(`Username: ${username}`);
-  console.log(`Password: ${password}`);
-  console.log(`2FA Code: ${authCode}`);
+  // Log the submitted 2FA code
+  console.log(`Submitted 2FA Code: ${authCode}`);
 
-  // Simulate 2FA check (replace with real logic)
-  if (authCode === '33444') {
-    res.send('2FA Verified Successfully!');
+  // Check if the provided auth code matches the generated code
+  if (authCode === tempAuthCode) {
+    console.log('2FA Verified! Login successful.');
+    res.json({ message: '2FA Verified! Login successful.' });
   } else {
-    res.send('Invalid 2FA Code.');
+    res.status(401).json({ error: 'Invalid 2FA code' });
   }
+});
 
-  // Clear session after verification
-  req.session.destroy((err) => {
-    if (err) {
-      return console.log('Error destroying session:', err);
-    }
-    console.log('Session destroyed.');
-  });
+// Serve the HTML page (index.html)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
