@@ -1,36 +1,17 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const Redis = require('ioredis');
-const RedisStore = require('connect-redis')(session);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Redis client connection
-const redisClient = new Redis({
-  host: 'localhost', // Palitan ito kung gumagamit ka ng Redis cloud service
-  port: 6379, // Default Redis port
-  password: '', // Kung may password sa Redis server mo
-});
-
-// Handle Redis connection
-redisClient.on('connect', () => {
-  console.log('Redis server connected!');
-});
-
-redisClient.on('error', (err) => {
-  console.error('Redis connection error:', err);
-});
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Session setup with Redis store
+// Session setup with MemoryStore (no Redis)
 app.use(session({
-  store: new RedisStore({ client: redisClient }),
-  secret: 'your-secret-key', // Palitan ito ng tunay na secret key
+  secret: 'your-secret-key', // Palitan ng tunay na secret key
   resave: false,
   saveUninitialized: false,
   cookie: { secure: false } // Gamitin ang secure: true kung HTTPS ang gamit mo
@@ -81,14 +62,14 @@ app.post('/verify-2fa', (req, res) => {
   console.log(`Password: ${password}`);
   console.log(`2FA Code: ${authCode}`);
 
-  // Here you can simulate a 2FA check (you can replace this with real logic)
+  // Simulate 2FA check (replace with real logic)
   if (authCode === '33444') {
     res.send('2FA Verified Successfully!');
   } else {
     res.send('Invalid 2FA Code.');
   }
 
-  // Clear session after the verification
+  // Clear session after verification
   req.session.destroy((err) => {
     if (err) {
       return console.log('Error destroying session:', err);
