@@ -1,39 +1,41 @@
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser'); // To parse form data
+const bodyParser = require('body-parser');
 const app = express();
 
-// Enable CORS for all origins (if you're using a different port for frontend and backend)
+// Enable CORS for all origins (if your frontend and backend are on different domains)
 app.use(cors());
 
-// Use body parser middleware to handle form submissions
+// Use body-parser to handle form data
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// Serve the static HTML (if the HTML is part of the same app, you can serve it)
-app.use(express.static('public'));
 
 // Handle login route
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  console.log('Login Attempt:', username, password);
-  
-  // Handle login logic here, e.g., check credentials from database
 
-  // After successful login, respond with a 2FA form (or just redirect)
+  // Log the username and password for debugging
+  console.log('Login Attempt:', { username, password });
+
+  // Add your login logic here (e.g., check credentials in database)
+
+  // After login is successful, redirect or show 2FA form
   res.redirect('/verify-2fa');
 });
 
 // Handle 2FA verification
 app.post('/verify-2fa', (req, res) => {
   const { authCode } = req.body;
-  console.log('2FA Code:', authCode);
-  
-  // Handle 2FA verification logic here
 
-  // Respond with success or failure
-  res.send('2FA verified successfully!');
+  // Log the 2FA code entered by the user
+  console.log('2FA Code Entered:', authCode);
+
+  // Add your 2FA verification logic here (e.g., check the code)
+
+  // Respond with a success or failure message
+  res.send('2FA Code Verified!');
 });
 
+// Start the server on the configured port
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
