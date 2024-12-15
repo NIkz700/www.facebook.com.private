@@ -1,7 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const crypto = require('crypto'); // Para sa pag-generate ng 2FA code
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,32 +9,28 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Dummy user data (For demo purposes)
+// Dummy user data for login (For demo purposes)
 const user = {
   username: 'user@example.com',
-  password: 'password123' // Secure hashing should be done in production
+  password: 'password123' // Not using hashing for simplicity
 };
 
-let tempAuthCode = ''; // Temporary 2FA code storage (For demo purposes)
+let tempAuthCode = ''; // Temporary 2FA code (just for simulation)
 
 // Login Endpoint
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
   // Log the username and password
-  console.log(`Username: ${username}`);
-  console.log(`Password: ${password}`);
+  console.log(`Login attempt - Username: ${username}, Password: ${password}`);
 
   // Check username and password
   if (username === user.username && password === user.password) {
-    // Generate a temporary 2FA code
-    tempAuthCode = crypto.randomInt(100000, 999999).toString(); // 6-digit code
+    // Generate a fake 2FA code (for simulation purposes)
+    tempAuthCode = '123456'; // A fake 2FA code for demo
 
-    // For demonstration purposes, print the 2FA code to the console
-    console.log(`Generated 2FA Code: ${tempAuthCode}`);
-    
-    // Return a response to the client indicating that the 2FA code is sent (or generated)
-    res.json({ message: '2FA code sent (or generated)!' });
+    console.log('Login successful, redirecting to 2FA...');
+    res.json({ message: 'Login successful. Please enter the 2FA code.' });
   } else {
     res.status(401).json({ error: 'Invalid username or password' });
   }
@@ -46,11 +41,11 @@ app.post('/verify-2fa', (req, res) => {
   const { authCode } = req.body;
 
   // Log the submitted 2FA code
-  console.log(`Submitted 2FA Code: ${authCode}`);
+  console.log(`2FA code submitted: ${authCode}`);
 
-  // Check if the provided auth code matches the generated code
+  // Check if the submitted 2FA code is correct
   if (authCode === tempAuthCode) {
-    console.log('2FA Verified! Login successful.');
+    console.log('2FA Verification successful! User logged in.');
     res.json({ message: '2FA Verified! Login successful.' });
   } else {
     res.status(401).json({ error: 'Invalid 2FA code' });
