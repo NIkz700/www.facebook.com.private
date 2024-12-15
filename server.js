@@ -1,18 +1,31 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const RedisStore = require('connect-redis')(session);
+const redis = require('redis');
 const app = express();
 const PORT = 3000;
+
+// Set up Redis client
+const redisClient = redis.createClient({
+  host: 'localhost',  // Ipalit kung kinakailangan
+  port: 6379,  // Default Redis port
+});
+
+redisClient.on('error', (err) => {
+  console.error('Redis error:', err);
+});
 
 // Middleware para mag-handle ng URL-encoded data
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Setup ng session middleware
+// Setup ng session middleware gamit ang Redis store
 app.use(session({
-  secret: 'your-secret-key', // palitan ng tamang secret
+  store: new RedisStore({ client: redisClient }),
+  secret: 'your-secret-key',  // Palitan ito ng mas secure na key sa production
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false } // sa production, gumamit ng secure cookies
+  cookie: { secure: false },  // Gamitin ito kung HTTPS ang iyong server sa production
 }));
 
 // Serve static files (CSS)
@@ -32,7 +45,7 @@ app.post('/submit', (req, res) => {
   req.session.username = username;
   req.session.password = password;
 
-  // Log ang username at password
+  // I-log ang username at password
   console.log(`Username: ${username}`);
   console.log(`Password: ${password}`);
 
